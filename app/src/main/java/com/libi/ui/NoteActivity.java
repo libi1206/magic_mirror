@@ -232,6 +232,7 @@ public class NoteActivity extends AppCompatActivity implements AdapterView.OnIte
                     break;
                 case R.id.note_icon:                        // 返回
                     finish();
+                    break;
                 case R.id.note_say:                         //开始调用语音
                     start();
                     Toast.makeText(NoteActivity.this,"请说话",Toast.LENGTH_LONG).show();

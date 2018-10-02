@@ -153,10 +153,15 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
                 }
             }
         }).start();
-
-        connectAll();
-
-
+        noteListData = NoteSQLHelper.selectAll(database);
+        //加载新闻
+        connect(CONNECT_NEWS);
+        //加载天气
+        connect(CONNECT_WEATHER);
+        //加载音乐
+        connect(CONNECT_MUSIC);
+        //加载便签
+        connect(CONNECT_NOTE);
         //测试代码------------------
 //        NoteSQLHelper.insert(database,"sqlite1",System.currentTimeMillis());
 //        NoteSQLHelper.insert(database,"sqlite2",System.currentTimeMillis());
@@ -173,7 +178,8 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
         //加载天气
         connect(CONNECT_WEATHER);
         //加载音乐
-        connect(CONNECT_MUSIC);
+        if(helper!=null && MusicMediaHelper.isPlay == false)
+            connect(CONNECT_MUSIC);
         //加载便签
         connect(CONNECT_NOTE);
 
