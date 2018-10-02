@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:text="返回"
+            android:layout_margin="5dp"
+            android:id="@+id/web_back"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:text="标题"
+            android:id="@+id/web_title"
+            android:layout_margin="5dp"
+
+            android:singleLine="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:ellipsize="marquee"/>
+    </LinearLayout>
+
+    <WebView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/web_view"/>
+
+</LinearLayout>

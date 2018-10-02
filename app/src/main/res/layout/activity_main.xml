@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.libi.ui.MainActivity">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:id="@+id/weather"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="测试天气" />
+
+        <Button
+            android:id="@+id/news"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="测试新闻" />
+
+        <Button
+            android:id="@+id/music"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="测试音乐" />
+
+        <Button
+            android:id="@+id/ui"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="测试界面" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/asr"
+            android:text="测试语音" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp" />
+<ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <TextView
+        android:id="@+id/result"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="示例结果" />
+</ScrollView>
+
+
+
+</LinearLayout>

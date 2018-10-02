@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="痛心疾首！，美国通缉了14年的强奸犯在中国做外教！"
+        android:id="@+id/news_title"
+        android:textSize="18sp"
+        android:layout_margin="10dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:orientation="horizontal">
+        <com.libi.ui.view.URLImageView
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:id="@+id/news_img1"
+            android:scaleType="fitXY"
+            android:layout_weight="1"
+            android:layout_margin="2dp"
+            android:src="@drawable/music_play" />
+        <com.libi.ui.view.URLImageView
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:scaleType="fitXY"
+            android:id="@+id/news_img2"
+            android:layout_weight="1"
+            android:layout_margin="2dp"
+            android:src="@drawable/music_play"/>
+        <com.libi.ui.view.URLImageView
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:id="@+id/news_img3"
+            android:scaleType="fitXY"
+            android:layout_margin="2dp"
+            android:layout_weight="1"
+
+            android:src="@drawable/music_play"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="5dp"
+        android:layout_marginLeft="15dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="新浪"
+            android:layout_marginRight="30dp"
+            android:id="@+id/news_post_name"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/news_date"
+            android:text="2018年9月13日 9:13:24"/>
+
+
+    </LinearLayout>
+
+</LinearLayout>
