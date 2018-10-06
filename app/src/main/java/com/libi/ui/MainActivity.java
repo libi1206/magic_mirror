@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener,EventListener {
 
@@ -48,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button mMusicButtonutton;
     private Button mTestButton;
     private Button mASRButton;
+    private Button mWeakUpButton;
     private TextView textView;
 
     private static final int WEATHER_SUCCESS = 0;
@@ -62,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TimeHandler mTimeHandler;
 
     private EventManager asr;
+    private EventManager weakUp;
 
 
     @Override
@@ -78,6 +81,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onDestroy() {
         super.onDestroy();
         asr.send(SpeechConstant.ASR_CANCEL, "{}", null, 0, 0);
+        weakUp.send(SpeechConstant.WAKEUP_STOP, "{}", null, 0, 0);
     }
 
     private void init() {
@@ -86,6 +90,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         progressDialog = new ProgressDialog(this);
         asr = EventManagerFactory.create(this, "asr");
         asr.registerListener(this);
+        weakUp = EventManagerFactory.create(this, "wp");
+        weakUp.registerListener(new EventListener() {
+            @Override
+            public void onEvent(String name, String params, byte[] data, int offset, int length) {
+                String logTxt = "name: " + name;
+                if (params != null && !params.isEmpty()) {
+                    logTxt += " ;params :" + params;
+                } else if (data != null) {
+                    logTxt += " ;data length=" + data.length;
+                }
+                printLog(logTxt);
+            }
+        });
+
+
         //开始计时
         new Thread(new Runnable() {
             @Override
@@ -112,6 +131,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mWeatherButton.setOnClickListener(this);
         mTestButton.setOnClickListener(this);
         mASRButton.setOnClickListener(this);
+        mWeakUpButton.setOnClickListener(this);
     }
 
     private void findView() {
@@ -120,6 +140,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mMusicButtonutton = findViewById(R.id.music);
         mASRButton = findViewById(R.id.asr);
         mTestButton = findViewById(R.id.ui);
+        mWeakUpButton = findViewById(R.id.weak_up);
         textView = findViewById(R.id.result);
     }
 
@@ -165,14 +186,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.ui:
                 Intent intent = new Intent(MainActivity.this,DeskTopActivity.class);
                 startActivity(intent);
+                break;
             case R.id.asr:
-                start();
+                asrStart();
+                Toast.makeText(this, "请说话", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.weak_up:
+                weakStart();
+                Toast.makeText(this, "开始唤醒", Toast.LENGTH_SHORT).show();
             default:
                 break;
         }
     }
 
-    private void start() {
+    private void asrStart() {
         textView.append("\n");
         Map<String, Object> params = new LinkedHashMap<String, Object>();
         String event = SpeechConstant.ASR_START;
@@ -182,6 +209,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         json = new JSONObject(params).toString();
         asr.send(event, json, null, 0, 0);
         printLog("json:" + json);
+    }
+
+    private void weakStart() {
+        textView.setText("");
+        Map<String, Object> params = new TreeMap<String, Object>();
+
+        params.put(SpeechConstant.ACCEPT_AUDIO_VOLUME, false);
+        params.put(SpeechConstant.WP_WORDS_FILE, "assets:///WakeUp.bin");
+        // "assets:///WakeUp.bin" 表示WakeUp.bin文件定义在assets目录下
+
+        String json = null; // 这里可以替换成你需要测试的json
+        json = new JSONObject(params).toString();
+        weakUp.send(SpeechConstant.WAKEUP_START, json, null, 0, 0);
+        printLog("输入参数：" + json);
+    }
+
+    private void weakStop() {
+        weakUp.send(SpeechConstant.WAKEUP_STOP, null, null, 0, 0);
     }
 
     private void connect(final int code) {

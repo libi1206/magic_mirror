@@ -46,6 +46,12 @@
             android:layout_height="wrap_content"
             android:id="@+id/asr"
             android:text="测试语音" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/weak_up"
+            android:text="测试唤醒" />
     </LinearLayout>
 
     <View
