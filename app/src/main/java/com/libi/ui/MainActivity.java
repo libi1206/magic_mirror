@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         progressDialog = new ProgressDialog(this);
         asr = EventManagerFactory.create(this, "asr");
         weakUp = EventManagerFactory.create(this, "wp");
-        speakTool = new SpeakTool(this, "这是一段测试语音");
+        speakTool = new SpeakTool(this, "这是一段测试语音",textView);
 
 
         //开始计时
@@ -153,9 +153,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void initPermission() {
         String permissions[] = {Manifest.permission.RECORD_AUDIO,
                 Manifest.permission.ACCESS_NETWORK_STATE,
-                Manifest.permission.INTERNET,
                 Manifest.permission.READ_PHONE_STATE,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.INTERNET,
+                Manifest.permission.MODIFY_AUDIO_SETTINGS,
+                Manifest.permission.WRITE_SETTINGS,
+                Manifest.permission.ACCESS_WIFI_STATE,
+                Manifest.permission.CHANGE_WIFI_STATE,
+                Manifest.permission.CALL_PHONE,
+                Manifest.permission.MODIFY_PHONE_STATE,
+                Manifest.permission.PROCESS_OUTGOING_CALLS,
+                Manifest.permission.READ_CALL_LOG
         };
 
         ArrayList<String> toApplyList = new ArrayList<String>();
