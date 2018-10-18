@@ -32,6 +32,7 @@ import com.libi.data.WeatherData;
 import com.libi.format.MusicFormat;
 import com.libi.format.NewsFormat;
 import com.libi.format.WeatherFormat;
+import com.libi.util.SpeakTool;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button mTestButton;
     private Button mASRButton;
     private Button mWeakUpButton;
+    private Button mSpeak;
     private TextView textView;
 
     private static final int WEATHER_SUCCESS = 0;
@@ -65,15 +67,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private EventManager asr;
     private EventManager weakUp;
-
+    private SpeakTool speakTool;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         findView();
-        setLisenter();
         init();
+        setLisenter();
         initPermission();
     }
 
@@ -89,20 +91,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mTimeHandler = new TimeHandler();
         progressDialog = new ProgressDialog(this);
         asr = EventManagerFactory.create(this, "asr");
-        asr.registerListener(this);
         weakUp = EventManagerFactory.create(this, "wp");
-        weakUp.registerListener(new EventListener() {
-            @Override
-            public void onEvent(String name, String params, byte[] data, int offset, int length) {
-                String logTxt = "name: " + name;
-                if (params != null && !params.isEmpty()) {
-                    logTxt += " ;params :" + params;
-                } else if (data != null) {
-                    logTxt += " ;data length=" + data.length;
-                }
-                printLog(logTxt);
-            }
-        });
+        speakTool = new SpeakTool(this, "这是一段测试语音");
 
 
         //开始计时
@@ -132,6 +122,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mTestButton.setOnClickListener(this);
         mASRButton.setOnClickListener(this);
         mWeakUpButton.setOnClickListener(this);
+        asr.registerListener(this);
+        mSpeak.setOnClickListener(this);
+        weakUp.registerListener(new EventListener() {
+            @Override
+            public void onEvent(String name, String params, byte[] data, int offset, int length) {
+                String logTxt = "name: " + name;
+                if (params != null && !params.isEmpty()) {
+                    logTxt += " ;params :" + params;
+                } else if (data != null) {
+                    logTxt += " ;data length=" + data.length;
+                }
+                printLog(logTxt);
+            }
+        });
     }
 
     private void findView() {
@@ -141,6 +145,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mASRButton = findViewById(R.id.asr);
         mTestButton = findViewById(R.id.ui);
         mWeakUpButton = findViewById(R.id.weak_up);
+        mSpeak = findViewById(R.id.speak);
         textView = findViewById(R.id.result);
     }
 
@@ -194,6 +199,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.weak_up:
                 weakStart();
                 Toast.makeText(this, "开始唤醒", Toast.LENGTH_SHORT).show();
+            case R.id.speak:
+                speakTool.speak();
+                break;
             default:
                 break;
         }
@@ -303,6 +311,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void printLog(String s) {
         Log.w("语音", s);
+        textView.append("\n"+s);
     }
 
     class CloseDialogHandler extends Handler {

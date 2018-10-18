@@ -52,6 +52,11 @@
             android:layout_height="wrap_content"
             android:id="@+id/weak_up"
             android:text="测试唤醒" />
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/speak"
+            android:text="测试朗读" />
     </LinearLayout>
 
     <View
