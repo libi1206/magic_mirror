@@ -24,6 +24,10 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.baidu.speech.EventListener;
+import com.baidu.speech.EventManager;
+import com.baidu.speech.EventManagerFactory;
+import com.baidu.speech.asr.SpeechConstant;
 import com.libi.R;
 import com.libi.connection.MusicListConnection;
 import com.libi.connection.NewsConnection;
@@ -45,25 +49,35 @@ import com.libi.ui.adapter.NoteAdapter;
 import com.libi.ui.fragment.NewsFragment;
 import com.libi.ui.service.MusicMediaHelper;
 import com.libi.ui.service.NoteSQLHelper;
+import com.libi.util.SpeakTool;
 //import com.libi.ui.service.MusicService;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Created by surface on 2018/9/11.
+ * 主界面
+ * TODO 记得把它设为主要界面
  */
 
-public class DeskTopActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemClickListener {
+public class DeskTopActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemClickListener, EventListener {
 
+    private static final String WAKE_UP = "wp";
+    private static final String ASR = "asr";
     private TextView time;
     private TextView date;
     private TextView week;
+
+    private long lastLoadTime;
 
     private MusicMediaHelper helper;
     private MusicListData musicListData;
@@ -78,6 +92,7 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
     private static final int NOTE_SUCCESS = 3;
     private static final int FALL = 9;
     private static final int TIME_OK = 100;
+    private static final int RELOAD = 200;
 
     private ProgressDialog progressDialog;
 
@@ -111,6 +126,10 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
     private SQLiteDatabase database;
     private NoteListData noteListData;
 
+    private EventManager wakeUp;
+    private EventManager asr;
+
+    private SpeakTool speakTool;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,14 +137,23 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.desktop_layout);
         findView();
-        setListener();
         init();
+        setListener();
     }
 
     @Override
     protected void onRestart() {
+        // TODO 歌曲如果是暂停状态，在从另外一个界面返回这个界面就会发生播放错误而导致歌曲自动播放下一首
+        //暂时把从新加载的连接刷新给去掉
         super.onRestart();
-        connectAll();
+        //connectAll();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        wakeUp.send(SpeechConstant.WAKEUP_STOP, "{}", null, 0, 0);
+        asr.send(SpeechConstant.ASR_CANCEL, "{}", null, 0, 0);
     }
 
     private void init() {
@@ -135,6 +163,12 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
         noteSQLHelper = new NoteSQLHelper(this, null, 1);
         database = noteSQLHelper.getWritableDatabase();
 
+        //开始创建语音唤醒和语音识别的事件管理
+        wakeUp = EventManagerFactory.create(this, WAKE_UP);
+        asr = EventManagerFactory.create(this, ASR);
+
+        speakTool = new SpeakTool(this, null, null);
+
         //开始计时
         new Thread(new Runnable() {
             @Override
@@ -143,7 +177,11 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
                     while (true) {
                         //Log.w("时间", "计时");
                         Message message = Message.obtain();
-                        message.what = TIME_OK;
+                        if (System.currentTimeMillis() - lastLoadTime >= 4 * 60 * 60 * 1000) {
+                            message.what = RELOAD;
+                        } else {
+                            message.what = TIME_OK;
+                        }
                         mTimeHandler.sendMessage(message);
                         Thread.sleep(1000);
                     }
@@ -162,12 +200,16 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
         connect(CONNECT_MUSIC);
         //加载便签
         connect(CONNECT_NOTE);
+        lastLoadTime = System.currentTimeMillis();
         //测试代码------------------
 //        NoteSQLHelper.insert(database,"sqlite1",System.currentTimeMillis());
 //        NoteSQLHelper.insert(database,"sqlite2",System.currentTimeMillis());
 //        NoteSQLHelper.insert(database,"sqlite3",System.currentTimeMillis());
 
         //测试代码-------------------
+
+        //打开语音唤醒
+        wakeStart();
     }
 
     //重新加载所有东西
@@ -178,11 +220,11 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
         //加载天气
         connect(CONNECT_WEATHER);
         //加载音乐
-        if(helper!=null && MusicMediaHelper.isPlay == false)
+        if (helper != null && MusicMediaHelper.isPlay == false)
             connect(CONNECT_MUSIC);
         //加载便签
         connect(CONNECT_NOTE);
-
+        lastLoadTime = System.currentTimeMillis();
     }
 
     private void setListener() {
@@ -197,13 +239,16 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
         noteList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                //TODO 点击进入编辑页面
+                //点击进入编辑页面
                 Intent startNote = new Intent(DeskTopActivity.this, NoteActivity.class);
                 NoteData data = noteListData.getDatas()[i];
                 startNote.putExtra("count", i);
                 startActivity(startNote);
             }
         });
+
+        asr.registerListener(this);
+        wakeUp.registerListener(this);
     }
 
     private void findView() {
@@ -300,6 +345,31 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
         }).start();
     }
 
+    private void asrStart() {
+        Map<String, Object> params = new LinkedHashMap<String, Object>();
+        String event = SpeechConstant.ASR_START;
+
+        params.put(SpeechConstant.ACCEPT_AUDIO_VOLUME, false);
+        String json = null;
+        json = new JSONObject(params).toString();
+        asr.send(event, json, null, 0, 0);
+        Log.w("语音识别", "json:" + json);
+    }
+
+    private void wakeStart() {
+        Map<String, Object> params = new TreeMap<String, Object>();
+
+        params.put(SpeechConstant.ACCEPT_AUDIO_VOLUME, false);
+        params.put(SpeechConstant.WP_WORDS_FILE, "assets:///WakeUp.bin");
+        // "assets:///WakeUp.bin" 表示WakeUp.bin文件定义在assets目录下
+
+        String json = null; // 这里可以替换成你需要测试的json
+        json = new JSONObject(params).toString();
+        // 这里有个奇怪的空指针 解决了
+        wakeUp.send(SpeechConstant.WAKEUP_START, json, null, 0, 0);
+        Log.w("语音唤醒", "输入参数：" + json);
+    }
+
     private void setNewsAdapter(NewsListData data) {
         newsList.setAdapter(new NewsAdapter(DeskTopActivity.this, R.layout.news_item_layout, data));
     }
@@ -355,7 +425,7 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
         day3Number.setText(day3.getLow() + "-" + day3.getHigh());
     }
 
-    // TODO 更新音乐的数据，暂时废弃
+    //  更新音乐的数据，暂时废弃
 //    private void updateMusic(MusicListData data) {
 //        Intent intent = new Intent(this, MusicService.class);
 //        Bundle bundle = new Bundle();
@@ -536,6 +606,7 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
 //        startService(intent);
     }
 
+
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
         String url = newsListData.getNewsItemDatas()[i].getUrl();
@@ -545,27 +616,99 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
         startActivity(webIntent);
     }
 
+    @Override
+    public void onEvent(String name, String params, byte[] data, int offset, int length) {
+        //打印LOG————————————————————————
+        String logTxt = "名字: " + name;
+        if (params != null && !params.isEmpty()) {
+            logTxt += " ;参数 :" + params;
+        } else if (data != null) {
+            logTxt += " ;数据 长度=" + data.length;
+        }
+        Log.e("桌面", logTxt);
+        //打印结束————————————————————————
+
+        JSONObject json = null;
+        String wakeUpSuccess = null;
+        int asrFill = 0;
+        try {
+            if (params != null)
+                json = new JSONObject(params);
+            if (json != null) {
+                wakeUpSuccess = json.getString("errorDesc");
+                asrFill = json.getInt("error");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        if (name.startsWith(WAKE_UP) && "wakup success".equals(wakeUpSuccess)) {
+            speakTool.speak(getString(R.string.reply_first));
+            asrStart();
+        } else if ((ASR+".ready").equals(name)) {
+            logTxt = "name" + name;
+            String result;
+
+            if (params != null && !params.isEmpty()) {
+                logTxt += "params:" + params;
+            }
+
+            if (name.equals(SpeechConstant.CALLBACK_EVENT_ASR_PARTIAL)) {
+                if (params.contains("\"nlu_result\"")) {
+                    if (length > 0 && data.length > 0) {
+                        logTxt += ", 语义解析结果：" + new String(data, offset, length);
+                    }
+                }
+            } else if (data != null) {
+                logTxt += " ;data length=" + data.length;
+            }
+            try {
+                if (params != null) {
+                    json = new JSONObject(params);
+                    if ("final_result".equals(json.getString("result_type"))) {
+                        result = json.get("best_result").toString();
+                        //TODO 这里应该写一百万个if来做伪人工智能，现在还是个复读机
+                        speakTool.speak("你说的是：" + result);
+                    }
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        } else if (asrFill == 7001) {
+            speakTool.speak(getString(R.string.reply_pardon));
+        }
+
+    }
+
     class TimeHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case TIME_OK:
-                    long times = System.currentTimeMillis();
-                    Calendar calendar = Calendar.getInstance();
-                    calendar.setTime(new Date(times));
-
-                    CharSequence timeStr = DateFormat.format("HH:mm", times);
-                    String dateStr = calendar.get(Calendar.MONTH) + 1 + "月" + calendar.get(Calendar.DAY_OF_MONTH) + "日";
-                    String weekStr = getWeek(calendar.get(Calendar.DAY_OF_WEEK));
-                    //更新ui
-                    time.setText(timeStr);
-                    date.setText(dateStr);
-                    week.setText(weekStr);
+                    updateTime();
+                    break;
+                case RELOAD:
+                    updateTime();
+                    connectAll();
+                    Log.e("时间", "已经自动更新UI");
                     break;
                 default:
                     Log.e("时间", "出现了未知的情况");
                     break;
             }
+        }
+
+        private void updateTime() {
+            long times = System.currentTimeMillis();
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(new Date(times));
+
+            CharSequence timeStr = DateFormat.format("HH:mm", times);
+            String dateStr = calendar.get(Calendar.MONTH) + 1 + "月" + calendar.get(Calendar.DAY_OF_MONTH) + "日";
+            String weekStr = getWeek(calendar.get(Calendar.DAY_OF_WEEK));
+            //更新ui
+            time.setText(timeStr);
+            date.setText(dateStr);
+            week.setText(weekStr);
         }
     }
 
@@ -605,6 +748,7 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
                         String url = getUrl(data.getMusicDatas()[MusicMediaHelper.count]);
                         helper = new MusicMediaHelper(new NextMusicHandler(), url, musicSeekbar, musicTime);
                         updateMusicUi(data);
+                        helper.pause();
                         //Intent intent = new Intent(DeskTopActivity.this, MusicService.class);
                         //textView.setText(data.getMusicDatas()[0].getSongName() + "," + data.getMusicDatas()[0].getSingerName());
                         //updateMusic(data);
@@ -650,6 +794,7 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
                     break;
                 case 1:
                     Toast.makeText(DeskTopActivity.this, "播放错误", Toast.LENGTH_LONG).show();
+                    helper.pause();
                     break;
                 default:
                     break;

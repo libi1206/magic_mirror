@@ -64,9 +64,10 @@ public class SpeakTool {
             @Override
             public void run() {
                 //TODO 暂时放在外面
+                initTTs();
             }
         }).start();
-        initTTs();
+
         assert mSpeechSynthesizer != null;
     }
 
@@ -227,14 +228,16 @@ public class SpeakTool {
         }
     }
     private void print(String s) {
-        textView.append("\n"+s);
+//        if (textView != null) {
+//            textView.append("\n"+s);
+//        }
         Log.w(TAG, s);
     }
 
     /**
      * 开始朗读传入的内容
      */
-    //TODO 试试更改text的内容，尝试类的重复应用
+    // 试试更改text的内容，尝试类的重复应用 可以更改
     public void speak() {
         /* 以下参数每次合成时都可以修改
          *  mSpeechSynthesizer.setParam(SpeechSynthesizer.PARAM_SPEAKER, "0");

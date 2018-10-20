@@ -88,7 +88,7 @@ public class URLImageView extends ImageView {
 
 
     static class GetUrlImageHandler extends Handler {
-        //TODO 现在是强引用
+        // 现在是强引用
         private URLImageView imageViewWeakReference;
 
         public GetUrlImageHandler(URLImageView view) {
@@ -171,7 +171,8 @@ public class URLImageView extends ImageView {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            // TODO: handle exception
+            // handle exception
+            Log.e("读取图片", "读取图片异常");
         }
         return bitmap;
     }

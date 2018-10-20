@@ -207,8 +207,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.weak_up:
                 weakStart();
                 Toast.makeText(this, "开始唤醒", Toast.LENGTH_SHORT).show();
+                break;
             case R.id.speak:
-                speakTool.speak();
+                speakTool.speak("这是更改后的语音");
                 break;
             default:
                 break;
