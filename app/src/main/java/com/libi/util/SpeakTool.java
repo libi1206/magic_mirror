@@ -106,7 +106,7 @@ public class SpeakTool {
      */
     private void initTTs() {
         LoggerProxy.printable(true); // 日志打印在logcat中
-        boolean isMix = ttsMode.equals(TtsMode.ONLINE);
+        boolean isMix = ttsMode.equals(TtsMode.MIX);
         boolean isSuccess;
         if (isMix) {
             // 检查2个离线资源是否可读

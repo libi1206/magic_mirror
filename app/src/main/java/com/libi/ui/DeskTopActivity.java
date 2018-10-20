@@ -636,15 +636,21 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
                 json = new JSONObject(params);
             if (json != null) {
                 wakeUpSuccess = json.getString("errorDesc");
-                asrFill = json.getInt("error");
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        try {
+            if(json!=null)
+                asrFill = json.getInt("error");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
         if (name.startsWith(WAKE_UP) && "wakup success".equals(wakeUpSuccess)) {
+            helper.pause();
             speakTool.speak(getString(R.string.reply_first));
             asrStart();
-        } else if ((ASR+".ready").equals(name)) {
+        } else if ((ASR+".partial").equals(name)) {
             logTxt = "name" + name;
             String result;
 
@@ -661,6 +667,9 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
             } else if (data != null) {
                 logTxt += " ;data length=" + data.length;
             }
+            Log.w("桌面语音",logTxt);
+
+
             try {
                 if (params != null) {
                     json = new JSONObject(params);
@@ -668,12 +677,13 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
                         result = json.get("best_result").toString();
                         //TODO 这里应该写一百万个if来做伪人工智能，现在还是个复读机
                         speakTool.speak("你说的是：" + result);
+                        //Toast.makeText(this, result, Toast.LENGTH_LONG).show();
                     }
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-        } else if (asrFill == 7001) {
+        }else if((ASR+".finish").equals(name) && asrFill != 0){
             speakTool.speak(getString(R.string.reply_pardon));
         }
 
