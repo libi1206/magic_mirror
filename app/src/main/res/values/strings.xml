@@ -3,4 +3,11 @@
 
     <string name="reply_first">我在</string>
     <string name="reply_pardon">对不起，我没听清</string>
+    <string name="reply_dont_know">对不起，我没听懂</string>
+    <string name="reply_ok">好的</string>
+    
+    <string name="ezui_appkey">90bc6580e6bd4aa19dde80bf15f8c495()</string>
+    <string name="ezui_token">at.8txrvfqg10uhie1r26ccd2hh6i7qzcec-5tom976djf-0335y7r-pai4mako0</string>
+    <string name="ezui_url_open">ezopen://open.ys7.com/C40361106/1.hd.live</string>
+    <string name="ezui_url_h5">https://open.ys7.com/view/h5/019c18750e584e46855d44cc3311d881</string>
 </resources>

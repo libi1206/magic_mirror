@@ -49,6 +49,7 @@ import com.libi.ui.adapter.NoteAdapter;
 import com.libi.ui.fragment.NewsFragment;
 import com.libi.ui.service.MusicMediaHelper;
 import com.libi.ui.service.NoteSQLHelper;
+import com.libi.util.AIHander;
 import com.libi.util.SpeakTool;
 //import com.libi.ui.service.MusicService;
 
@@ -129,7 +130,10 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
     private EventManager wakeUp;
     private EventManager asr;
 
+    private AIHander aiHander;
+
     private SpeakTool speakTool;
+    private WeatherData weatherData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -167,6 +171,7 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
         wakeUp = EventManagerFactory.create(this, WAKE_UP);
         asr = EventManagerFactory.create(this, ASR);
 
+
         speakTool = new SpeakTool(this, null, null);
 
         //开始计时
@@ -201,6 +206,7 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
         //加载便签
         connect(CONNECT_NOTE);
         lastLoadTime = System.currentTimeMillis();
+
         //测试代码------------------
 //        NoteSQLHelper.insert(database,"sqlite1",System.currentTimeMillis());
 //        NoteSQLHelper.insert(database,"sqlite2",System.currentTimeMillis());
@@ -307,6 +313,8 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
                             Log.e("连接", "天气");
                             data = new WeatherConnection("101210101").connect();
                             message.what = WEATHER_SUCCESS;
+                            //加载伪AI
+                            aiHander = new AIHander(speakTool, DeskTopActivity.this, weatherData);
                             break;
                         case CONNECT_NEWS:
                             Log.e("连接", "新闻");
@@ -616,6 +624,7 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
         startActivity(webIntent);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onEvent(String name, String params, byte[] data, int offset, int length) {
         //打印LOG————————————————————————
@@ -676,7 +685,12 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
                     if ("final_result".equals(json.getString("result_type"))) {
                         result = json.get("best_result").toString();
                         //TODO 这里应该写一百万个if来做伪人工智能，现在还是个复读机
-                        speakTool.speak("你说的是：" + result);
+                        if (aiHander != null) {
+                            int cmd = aiHander.handle(result);
+                            handleAI(cmd);
+                        }else {
+                            speakTool.speak("你说的是：" + result);
+                        }
                         //Toast.makeText(this, result, Toast.LENGTH_LONG).show();
                     }
                 }
@@ -687,6 +701,43 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
             speakTool.speak(getString(R.string.reply_pardon));
         }
 
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    private void handleAI(int cmd) {
+        switch (cmd) {
+            case AIHander.PLAY_MUSIC:
+                helper.start();
+                break;
+            case AIHander.NEXT_MUSIC:
+                //bundle.putInt("option",MusicService.OPTION_NEXT);
+                MusicMediaHelper.count++;
+                if (MusicMediaHelper.count >= musicListData.getCount()) {
+                    MusicMediaHelper.count = 0;
+                }
+
+                String url = getUrl(musicListData.getMusicDatas()[MusicMediaHelper.count]);
+                Log.e("桌面", "next url:" + url);
+                try {
+                    helper.next(url);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                musicPlay.setBackground(getDrawable(R.drawable.music_pause));
+                updateMusicUi(musicListData);
+                break;
+            case AIHander.PAUSE_MUSIC:
+                helper.pause();
+                break;
+            case AIHander.EZUI:
+                Intent startWeb = new Intent(DeskTopActivity.this, WebActivty.class);
+                startWeb.putExtra("url", getString(R.string.ezui_url_h5));
+                startActivity(startWeb);
+                break;
+            case AIHander.NULL_CMD:
+            default:
+                break;
+        }
     }
 
     class TimeHandler extends Handler {
@@ -731,8 +782,8 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
             switch (msg.what) {
                 case WEATHER_SUCCESS:
                     try {
-                        WeatherData data = (WeatherData) new WeatherFormat().format(msg.obj.toString());
-                        updateWeatherView(data);
+                        weatherData = (WeatherData) new WeatherFormat().format(msg.obj.toString());
+                        updateWeatherView(weatherData);
                         //textView.setText(data.getToday().getDate() + "," + data.getToday().getHigh() + "," + data.getToday().getLow() + "," + data.getToday().getType());
                     } catch (JSONException e) {
                         e.printStackTrace();

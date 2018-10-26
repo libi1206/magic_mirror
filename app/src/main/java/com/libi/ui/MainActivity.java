@@ -21,6 +21,9 @@ import com.baidu.speech.EventListener;
 import com.baidu.speech.EventManager;
 import com.baidu.speech.EventManagerFactory;
 import com.baidu.speech.asr.SpeechConstant;
+import com.ezvizuikit.open.EZUIError;
+import com.ezvizuikit.open.EZUIKit;
+import com.ezvizuikit.open.EZUIPlayer;
 import com.libi.R;
 import com.libi.connection.MusicListConnection;
 import com.libi.connection.NewsConnection;
@@ -39,6 +42,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -52,7 +56,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button mASRButton;
     private Button mWeakUpButton;
     private Button mSpeak;
+    private Button mPlayEZUI;
     private TextView textView;
+    private EZUIPlayer ezuiPlayer;
 
     private static final int WEATHER_SUCCESS = 0;
     private static final int NEWS_SUCCESS = 1;
@@ -75,6 +81,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         findView();
         init();
+        initEZUI();
         setLisenter();
         initPermission();
     }
@@ -93,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         asr = EventManagerFactory.create(this, "asr");
         weakUp = EventManagerFactory.create(this, "wp");
         speakTool = new SpeakTool(this, "这是一段测试语音",textView);
-
+        initEZUI();
 
         //开始计时
         new Thread(new Runnable() {
@@ -115,6 +122,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
+    private void initEZUI() {
+        EZUIKit.initWithAppKey(getApplication(),getString(R.string.ezui_appkey));
+        EZUIKit.setAccessToken(getString(R.string.ezui_token));
+        ezuiPlayer = findViewById(R.id.ezuiplayer);
+        ezuiPlayer.setUrl(getString(R.string.ezui_url_open));
+        ezuiPlayer.setCallBack(new EZUIPlayer.EZUIPlayerCallBack() {
+            @Override
+            public void onPlaySuccess() {
+                textView.append("\n播放成功");
+            }
+
+            @Override
+            public void onPlayFail(EZUIError ezuiError) {
+                textView.append("\n播放失败\n"+ezuiError.getErrorString());
+            }
+
+            @Override
+            public void onVideoSizeChange(int i, int i1) {
+
+            }
+
+            @Override
+            public void onPrepared() {
+
+            }
+
+            @Override
+            public void onPlayTime(Calendar calendar) {
+
+            }
+
+            @Override
+            public void onPlayFinish() {
+
+            }
+        });
+    }
+
     private void setLisenter() {
         mMusicButtonutton.setOnClickListener(this);
         mNewsButton.setOnClickListener(this);
@@ -122,6 +167,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mTestButton.setOnClickListener(this);
         mASRButton.setOnClickListener(this);
         mWeakUpButton.setOnClickListener(this);
+        mPlayEZUI.setOnClickListener(this);
         asr.registerListener(this);
         mSpeak.setOnClickListener(this);
         weakUp.registerListener(new EventListener() {
@@ -145,6 +191,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mASRButton = findViewById(R.id.asr);
         mTestButton = findViewById(R.id.ui);
         mWeakUpButton = findViewById(R.id.weak_up);
+        mPlayEZUI = findViewById(R.id.ezuiplay);
         mSpeak = findViewById(R.id.speak);
         textView = findViewById(R.id.result);
     }
@@ -210,6 +257,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.speak:
                 speakTool.speak("这是更改后的语音");
+                break;
+            case R.id.ezuiplay:
+                ezuiPlayer.startPlay();
+                Intent startWeb = new Intent(MainActivity.this, WebActivty.class);
+                startWeb.putExtra("url", getString(R.string.ezui_url_h5));
+                startActivity(startWeb);
                 break;
             default:
                 break;

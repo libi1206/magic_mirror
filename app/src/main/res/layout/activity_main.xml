@@ -42,36 +42,46 @@
         android:layout_height="wrap_content">
 
         <Button
+            android:id="@+id/asr"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/asr"
             android:text="测试语音" />
 
         <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:id="@+id/weak_up"
-            android:text="测试唤醒" />
-        <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="测试唤醒" />
+
+        <Button
             android:id="@+id/speak"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="测试朗读" />
+
+        <Button
+            android:id="@+id/ezuiplay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="测试播放" />
     </LinearLayout>
 
-    <View
+    <com.ezvizuikit.open.EZUIPlayer
         android:layout_width="match_parent"
-        android:layout_height="1dp" />
-<ScrollView
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    <TextView
-        android:id="@+id/result"
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="示例结果" />
-</ScrollView>
+        android:background="#000000"
+        android:id="@+id/ezuiplayer"/>
 
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/result"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="示例结果" />
+    </ScrollView>
 
 
 </LinearLayout>
