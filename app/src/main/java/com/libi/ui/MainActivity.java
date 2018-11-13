@@ -126,7 +126,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         EZUIKit.initWithAppKey(getApplication(),getString(R.string.ezui_appkey));
         EZUIKit.setAccessToken(getString(R.string.ezui_token));
         ezuiPlayer = findViewById(R.id.ezuiplayer);
-        ezuiPlayer.setUrl(getString(R.string.ezui_url_open));
         ezuiPlayer.setCallBack(new EZUIPlayer.EZUIPlayerCallBack() {
             @Override
             public void onPlaySuccess() {
@@ -158,6 +157,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             }
         });
+        ezuiPlayer.setUrl(getString(R.string.ezui_url_open));
     }
 
     private void setLisenter() {
@@ -260,9 +260,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.ezuiplay:
                 ezuiPlayer.startPlay();
-                Intent startWeb = new Intent(MainActivity.this, WebActivty.class);
-                startWeb.putExtra("url", getString(R.string.ezui_url_h5));
-                startActivity(startWeb);
+                Intent startCamera = new Intent(MainActivity.this, CamearActivity.class);
+//                startCamera.putExtra("url", getString(R.string.ezui_url_h5));
+                startActivity(startCamera);
                 break;
             default:
                 break;

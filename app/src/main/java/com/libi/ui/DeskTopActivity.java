@@ -313,8 +313,6 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
                             Log.e("连接", "天气");
                             data = new WeatherConnection("101210101").connect();
                             message.what = WEATHER_SUCCESS;
-                            //加载伪AI
-                            aiHander = new AIHander(speakTool, DeskTopActivity.this, weatherData);
                             break;
                         case CONNECT_NEWS:
                             Log.e("连接", "新闻");
@@ -685,11 +683,12 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
                     if ("final_result".equals(json.getString("result_type"))) {
                         result = json.get("best_result").toString();
                         //TODO 这里应该写一百万个if来做伪人工智能，现在还是个复读机
-                        if (aiHander != null) {
+                        if (weatherData != null) {
+                            Log.e("AI","进入AI算法:"+result);
                             int cmd = aiHander.handle(result);
                             handleAI(cmd);
                         }else {
-                            speakTool.speak("你说的是：" + result);
+                            speakTool.speak("正在获取天气信息，等下再问我吧");
                         }
                         //Toast.makeText(this, result, Toast.LENGTH_LONG).show();
                     }
@@ -784,6 +783,10 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
                     try {
                         weatherData = (WeatherData) new WeatherFormat().format(msg.obj.toString());
                         updateWeatherView(weatherData);
+                        //加载伪AI
+                        weatherData.getClass();
+                        aiHander = new AIHander(speakTool, DeskTopActivity.this, weatherData);
+                        Log.e("AI！！！", "应该是成功加载了");
                         //textView.setText(data.getToday().getDate() + "," + data.getToday().getHigh() + "," + data.getToday().getLow() + "," + data.getToday().getType());
                     } catch (JSONException e) {
                         e.printStackTrace();

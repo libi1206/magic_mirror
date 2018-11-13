@@ -40,15 +40,23 @@ public class AIHander {
             if (command.contains("今天")) {
                 data = weatherData.getToday();
                 reply += "今天的天气是：" + data.getType() + "，"+data.getHigh() + "到" + data.getLow();
+                speakTool.speak(reply);
+                return NULL_CMD;
             } else if (command.contains("明天")) {
                 data = weatherData.getTomorrow();
                 reply += "明天的天气是：" + data.getType() + "，"+data.getHigh() + "到" + data.getLow();
+                speakTool.speak(reply);
+                return NULL_CMD;
             } else if (command.contains("后天")) {
                 data = weatherData.getDayAfterTomorrow();
                 reply += "后天的天气是：" + data.getType() + "，"+data.getHigh() + "到" + data.getLow();
+                speakTool.speak(reply);
+                return NULL_CMD;
             } else if (command.contains("大后天")) {
                 data = weatherData.getThreeDayFrom();
                 reply += "今天的天气是：" + data.getType() + "，"+data.getHigh() + "到" + data.getLow();
+                speakTool.speak(reply);
+                return NULL_CMD;
             }
             data = weatherData.getToday();
             reply += "今天的天气是：" + data.getType() + "，"+data.getHigh() + "到" + data.getLow();
