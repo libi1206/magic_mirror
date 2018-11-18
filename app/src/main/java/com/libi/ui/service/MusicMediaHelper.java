@@ -1,20 +1,22 @@
 package com.libi.ui.service;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.media.MediaPlayer;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.libi.R;
 import com.libi.ui.DeskTopActivity;
 
 import java.io.IOException;
 
 /**
  * Created by surface on 2018/9/16.
+ *
  */
 
 public class MusicMediaHelper implements SeekBar.OnSeekBarChangeListener {
@@ -28,19 +30,22 @@ public class MusicMediaHelper implements SeekBar.OnSeekBarChangeListener {
     private Thread clock = new Thread(timer);
     private TextView musicTime;
     private DeskTopActivity.NextMusicHandler nextHandler;
+    private Activity activity;
 
     public static boolean isPlay = false;
     private static boolean isInit = false;
 
-    public MusicMediaHelper(final DeskTopActivity.NextMusicHandler handler, String url, SeekBar seekBar, TextView musicTime) throws IOException {
+    public MusicMediaHelper(Activity activity, final DeskTopActivity.NextMusicHandler handler, String url, SeekBar seekBar, TextView musicTime) throws IOException {
+        this.activity = activity;
         nextHandler = handler;
         dataSource = url;
         this.seekBar = seekBar;
-        mediaPlayer = new MediaPlayer();
-        mediaPlayer.setDataSource(url);
+        mediaPlayer = MediaPlayer.create(activity,R.raw.dan);
+//        mediaPlayer.setDataSource(url);
+
         this.musicTime = musicTime;
         clock.start();
-        mediaPlayer.prepareAsync();
+//        mediaPlayer.prepareAsync();
         mediaPlayer.pause();
         this.seekBar = seekBar;
         seekBar.setOnSeekBarChangeListener(this);
@@ -97,15 +102,14 @@ public class MusicMediaHelper implements SeekBar.OnSeekBarChangeListener {
         }
     }
 
-    public void next(String url) throws IOException {
+    public void next(int raw) throws IOException {
         pause();
-        dataSource = url;
         mediaPlayer.stop();
         mediaPlayer.reset();
         // mediaPlayer = new MediaPlayer();
         //mediaPlayer = new MediaPlayer();
-        mediaPlayer.setDataSource(url);
-        mediaPlayer.prepare();
+        mediaPlayer = MediaPlayer.create(activity, raw);
+//        mediaPlayer.prepare();
         start();
         //mediaPlayer.start();
         //mediaPlayer.reset();
@@ -131,12 +135,11 @@ public class MusicMediaHelper implements SeekBar.OnSeekBarChangeListener {
 
     //拖动时的效果：改变时间显示
     @Override
-    public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-        musicTime.setText(showTime(seekBar.getProgress()) + "/" + showTime(mediaPlayer.getDuration()));
+    public void onProgressChanged(SeekBar seekBar, int i, boolean b) {   musicTime.setText(showTime(seekBar.getProgress()) + "/" + showTime(mediaPlayer.getDuration()));
     }
 
     //开始拖动时的事件：啥都不干
-    @Override
+      @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
     }
 

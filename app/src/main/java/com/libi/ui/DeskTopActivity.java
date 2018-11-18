@@ -12,10 +12,8 @@ import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.text.format.DateFormat;
 import android.util.Log;
-import android.view.ActionMode;
 import android.view.View;
 import android.view.WindowManager;
-import android.webkit.WebViewClient;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -46,7 +44,6 @@ import com.libi.format.NewsFormat;
 import com.libi.format.WeatherFormat;
 import com.libi.ui.adapter.NewsAdapter;
 import com.libi.ui.adapter.NoteAdapter;
-import com.libi.ui.fragment.NewsFragment;
 import com.libi.ui.service.MusicMediaHelper;
 import com.libi.ui.service.NoteSQLHelper;
 import com.libi.util.AIHander;
@@ -57,7 +54,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -134,6 +130,7 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
 
     private SpeakTool speakTool;
     private WeatherData weatherData;
+    private int[] raws = new int[]{R.raw.yi, R.raw.dan, R.raw.ping, R.raw.hai};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -147,7 +144,7 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
 
     @Override
     protected void onRestart() {
-        // TODO 歌曲如果是暂停状态，在从另外一个界面返回这个界面就会发生播放错误而导致歌曲自动播放下一首
+        // 歌曲如果是暂停状态，在从另外一个界面返回这个界面就会发生播放错误而导致歌曲自动播放下一首
         //暂时把从新加载的连接刷新给去掉
         super.onRestart();
         //connectAll();
@@ -344,6 +341,7 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
                     message.obj = data.getRequestData();
                 } else {
                     message.what = FALL;
+                    message.arg1 = code;
                     message.obj = Integer.valueOf(data.getRequestCode());
                 }
                 mHandler.sendMessage(message);
@@ -565,25 +563,31 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
 //                    bundle.putInt("option",MusicService.OPTION_PAUSE);
 //                    musicPlay.setBackground(getDrawable(R.drawable.music_play));
 //                }
-                if (MusicMediaHelper.isPlay == false) {
-                    helper.start();
-                    musicPlay.setBackground(getDrawable(R.drawable.music_pause));
-                } else {
-                    helper.pause();
-                    musicPlay.setBackground(getDrawable(R.drawable.music_play));
+                if (helper != null) {
+                    if (MusicMediaHelper.isPlay == false) {
+                        helper.start();
+                        musicPlay.setBackground(getDrawable(R.drawable.music_pause));
+                    } else {
+                        helper.pause();
+                        musicPlay.setBackground(getDrawable(R.drawable.music_play));
+                    }
+                }else {
+                    Toast.makeText(this, "歌曲还没准备好", Toast.LENGTH_LONG).show();
                 }
+
                 break;
             case R.id.music_next:
                 //bundle.putInt("option",MusicService.OPTION_NEXT);
                 MusicMediaHelper.count++;
-                if (MusicMediaHelper.count >= musicListData.getCount()) {
+                if (MusicMediaHelper.count >= raws.length) {
                     MusicMediaHelper.count = 0;
                 }
 
                 String url = getUrl(musicListData.getMusicDatas()[MusicMediaHelper.count]);
+
                 Log.e("桌面", "next url:" + url);
                 try {
-                    helper.next(url);
+                    helper.next(raws[MusicMediaHelper.count]);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -653,11 +657,25 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
+        // 唤醒
         if (name.startsWith(WAKE_UP) && "wakup success".equals(wakeUpSuccess)) {
-            helper.pause();
-            speakTool.speak(getString(R.string.reply_first));
-            asrStart();
-        } else if ((ASR+".partial").equals(name)) {
+            try {
+                if ("返回桌面".equals(json.getString("word"))) {
+                    //TODO 返回到桌面
+
+                } else {
+                    if (helper != null)
+                        helper.pause();
+                    speakTool.speak(getString(R.string.reply_first));
+                    asrStart();
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        // 识别
+        else if ((ASR+".partial").equals(name)) {
             logTxt = "name" + name;
             String result;
 
@@ -682,7 +700,6 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
                     json = new JSONObject(params);
                     if ("final_result".equals(json.getString("result_type"))) {
                         result = json.get("best_result").toString();
-                        //TODO 这里应该写一百万个if来做伪人工智能，现在还是个复读机
                         if (weatherData != null) {
                             Log.e("AI","进入AI算法:"+result);
                             int cmd = aiHander.handle(result);
@@ -718,7 +735,7 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
                 String url = getUrl(musicListData.getMusicDatas()[MusicMediaHelper.count]);
                 Log.e("桌面", "next url:" + url);
                 try {
-                    helper.next(url);
+                    helper.next(raws[MusicMediaHelper.count]);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -729,9 +746,11 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
                 helper.pause();
                 break;
             case AIHander.EZUI:
-                Intent startWeb = new Intent(DeskTopActivity.this, WebActivty.class);
-                startWeb.putExtra("url", getString(R.string.ezui_url_h5));
-                startActivity(startWeb);
+//                Intent startWeb = new Intent(DeskTopActivity.this, WebActivty.class);
+//                startWeb.putExtra("url", getString(R.string.ezui_url_h5));
+
+                Intent startCamear = new Intent(DeskTopActivity.this,CamearActivity.class);
+                startActivity(startCamear);
                 break;
             case AIHander.NULL_CMD:
             default:
@@ -810,7 +829,7 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
                         MusicListData data = (MusicListData) new MusicFormat().format(msg.obj.toString());
                         musicListData = data;
                         String url = getUrl(data.getMusicDatas()[MusicMediaHelper.count]);
-                        helper = new MusicMediaHelper(new NextMusicHandler(), url, musicSeekbar, musicTime);
+                        helper = new MusicMediaHelper(DeskTopActivity.this,new NextMusicHandler(), url, musicSeekbar, musicTime);
                         updateMusicUi(data);
                         helper.pause();
                         //Intent intent = new Intent(DeskTopActivity.this, MusicService.class);
@@ -826,7 +845,22 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
                     setNoteAdapter(noteListData);
                     break;
                 case FALL:
-                    Toast.makeText(DeskTopActivity.this, "失败，返回码：" + msg.obj, Toast.LENGTH_LONG).show();
+                    String kind = "";
+                    switch (msg.arg1) {
+                        case CONNECT_MUSIC:
+                            kind = "音乐获取";
+                            break;
+                        case CONNECT_NEWS:
+                            kind = "新闻获取";
+                            break;
+                        case CONNECT_WEATHER:
+                            kind = "天气获取";
+                            break;
+                        default:
+                            kind = "";
+                    }
+//                    Toast.makeText(DeskTopActivity.this, kind+"失败，返回码：" + msg.obj, Toast.LENGTH_LONG).show();
+                    Log.e("处理器", kind + "失败，反悔吗" + msg.obj);
                     break;
                 default:
                     Log.w("处理器", "没有对应的消息序号");
@@ -848,7 +882,7 @@ public class DeskTopActivity extends AppCompatActivity implements View.OnClickLi
                     String url = getUrl(musicListData.getMusicDatas()[MusicMediaHelper.count]);
                     Log.e("桌面", "next url:" + url);
                     try {
-                        helper.next(url);
+                        helper.next(raws[MusicMediaHelper.count]);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
